@@ -38,8 +38,6 @@ newContainer.innerHTML = `
 body {
     font-family: Nunito, sans-serif !important;
 }
-
-
 </style>
 
 <div class="zxc1-date"></div>
@@ -178,7 +176,11 @@ setInterval(updateDateTime, 1000);
     function updateGradient() {
         const colorSource = document.querySelector('._12r-kWKkjIkrwbXraUuxRS');
         const gradientElement = document.querySelector('._3kJp2VbBkLeYF5qFwAY7fH');
-        if (!colorSource || !gradientElement) return;
+
+        if (!colorSource || !gradientElement) {
+            setTimeout(updateGradient, 1000);
+            return;
+        }
 
         const sourceColor = getComputedStyle(colorSource).color;
         gradientElement.style.background = `
@@ -190,11 +192,9 @@ setInterval(updateDateTime, 1000);
         `;
     }
 
-    function addClasses() {
-        document.querySelector('._2wuBnG966XHSI_-fn_Jx_G')?.remove();
-
+    function addStats1Class() {
         const root = document.querySelector('._2e7Hnzd56a2gMbdzXk5kJb');
-        if (root?.children[0]) {
+        if (root?.children[0] && !root.children[0].classList.contains('stats1')) {
             const firstChild = root.children[0];
             firstChild.classList.add('stats1');
             [...firstChild.children].forEach((child, idx) => {
@@ -203,31 +203,73 @@ setInterval(updateDateTime, 1000);
         }
     }
 
+    function observeStatsContainer() {
+        const observer = new MutationObserver((mutations) => {
+            const needsUpdate = mutations.some(mutation => {
+                return Array.from(mutation.addedNodes).some(node => {
+                    return node.classList?.contains('_2e7Hnzd56a2gMbdzXk5kJb') ||
+                           (node.querySelector && node.querySelector('._2e7Hnzd56a2gMbdzXk5kJb'));
+                });
+            });
+
+            if (needsUpdate) {
+                addStats1Class();
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    function observeGradientSource() {
+        const observer = new MutationObserver((mutations) => {
+            const needsUpdate = mutations.some(mutation => {
+                return Array.from(mutation.addedNodes).some(node => {
+                    return node.classList?.contains('_12r-kWKkjIkrwbXraUuxRS') ||
+                           (node.querySelector && node.querySelector('._12r-kWKkjIkrwbXraUuxRS'));
+                });
+            });
+
+            if (needsUpdate) {
+                updateGradient();
+                const colorSource = document.querySelector('._12r-kWKkjIkrwbXraUuxRS');
+                if (colorSource) {
+                    const colorObserver = new MutationObserver(() => updateGradient());
+                    colorObserver.observe(colorSource, {
+                        attributes: true,
+                        attributeFilter: ['style', 'class']
+                    });
+                }
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+
     function init() {
-        addClasses();
+        addStats1Class();
         updateGradient();
+        observeStatsContainer();
+        observeGradientSource();
 
         const colorSource = document.querySelector('._12r-kWKkjIkrwbXraUuxRS');
         if (colorSource) {
-            let lastColor = getComputedStyle(colorSource).color;
-            const observer = new MutationObserver(() => {
-                const newColor = getComputedStyle(colorSource).color;
-                if (newColor !== lastColor) {
-                    lastColor = newColor;
-                    updateGradient();
-                }
-            });
-
-            observer.observe(colorSource, {
+            const colorObserver = new MutationObserver(() => updateGradient());
+            colorObserver.observe(colorSource, {
                 attributes: true,
-                attributeFilter: ['style', 'class'],
-                subtree: false
+                attributeFilter: ['style', 'class']
             });
 
-            setInterval(() => {
-                const newColor = getComputedStyle(colorSource).color;
-                if (newColor !== lastColor) {
-                    lastColor = newColor;
+            setInterval(updateGradient, 3000);
+        } else {
+            const checkInterval = setInterval(() => {
+                if (document.querySelector('._12r-kWKkjIkrwbXraUuxRS')) {
+                    clearInterval(checkInterval);
                     updateGradient();
                 }
             }, 1000);
