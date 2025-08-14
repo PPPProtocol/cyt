@@ -78,6 +78,9 @@ setInterval(updateDateTime, 1000);
     styleContainer.className = 'zxc2';
     styleContainer.innerHTML = `
 <style>
+    ._2wuBnG966XHSI_-fn_Jx_G {
+        background-color: #ffffff04;
+    }
     ._2EB32MHQgo3UaKU6W6Swv8:hover {
         background-color: #00000080;
     }
